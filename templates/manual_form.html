@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diabetes App</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            background: linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.85)), 
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%234ecdc4" opacity="0.1"/><path d="M30,30 L70,30 L70,70 L30,70 Z" fill="none" stroke="%23ff6b6b" stroke-width="2" opacity="0.2"/><circle cx="50" cy="50" r="20" fill="none" stroke="%234ecdc4" stroke-width="2" opacity="0.2"/></svg>');
+            background-size: cover;
+            background-position: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .manual-container {
+            perspective: 1000px;
+            margin-top: 40px;
+        }
+        
+        .card {
+            background: linear-gradient(145deg, #ffffff, #f0f0f0);
+            border-radius: 15px;
+            box-shadow: 
+                0 8px 20px rgba(0, 0, 0, 0.1),
+                0 3px 8px rgba(0, 0, 0, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            transform-style: preserve-3d;
+            transform: translateZ(5px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            margin-bottom: 20px;
+        }
+        
+        .card:hover {
+            transform: translateZ(10px);
+            box-shadow: 
+                0 12px 30px rgba(0, 0, 0, 0.15),
+                0 4px 12px rgba(0, 0, 0, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        }
+        
+        .card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 107, 107, 0.05), transparent);
+            transform: rotate(45deg);
+            z-index: 0;
+        }
+        
+        .card-body {
+            position: relative;
+            z-index: 1;
+            background: transparent;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(to right, #ff6b6b, #ff8e8e);
+            border: none;
+            border-radius: 50px;
+            padding: 10px 25px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.5);
+        }
+        
+        .btn-outline-primary {
+            border-color: #4ecdc4;
+            color: #4ecdc4;
+            border-radius: 50px;
+            padding: 10px 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: #4ecdc4;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(78, 205, 196, 0.3);
+        }
+        
+        .form-control {
+            border-radius: 10px;
+            padding: 12px 15px;
+            border: 1px solid #e0e0e0;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            border-color: #4ecdc4;
+            box-shadow: 0 0 0 0.25rem rgba(78, 205, 196, 0.25);
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        h1 {
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        h2 {
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        
+        h4 {
+            color: #333;
+            font-weight: 600;
+            margin: 30px 0 15px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #4ecdc4;
+        }
+        
+        .diabetes-icon {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            border-radius: 50%;
+            margin: 0 10px;
+            position: relative;
+            transform: translateY(10px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .diabetes-icon::before {
+            content: '+';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .floating-elements {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            overflow: hidden;
+            z-index: 0;
+        }
+        
+        .floating-element {
+            position: absolute;
+            background: rgba(255, 107, 107, 0.1);
+            border-radius: 50%;
+            animation: float 15s infinite linear;
+        }
+        
+        .floating-element:nth-child(1) {
+            width: 80px;
+            height: 80px;
+            top: 10%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+        
+        .floating-element:nth-child(2) {
+            width: 60px;
+            height: 60px;
+            top: 70%;
+            left: 80%;
+            animation-delay: -5s;
+        }
+        
+        .floating-element:nth-child(3) {
+            width: 40px;
+            height: 40px;
+            top: 40%;
+            left: 85%;
+            animation-delay: -10s;
+        }
+        
+        .manual-icon {
+            font-size: 2.5rem;
+            color: #4ecdc4;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .gender-card {
+            background: linear-gradient(145deg, #ffffff, #f8f9fa);
+            border-left: 4px solid #4ecdc4;
+        }
+        
+        .form-text {
+            color: #6c757d;
+            font-size: 0.875rem;
+            margin-top: 5px;
+        }
+        
+        .text-info {
+            color: #4ecdc4 !important;
+            background: rgba(78, 205, 196, 0.1);
+            padding: 10px 15px;
+            border-radius: 10px;
+            border-left: 4px solid #4ecdc4;
+        }
+        
+        @keyframes float {
+            0% {
+                transform: translateY(0) rotate(0deg);
+            }
+            50% {
+                transform: translateY(-20px) rotate(180deg);
+            }
+            100% {
+                transform: translateY(0) rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-elements">
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+    </div>
+    
+    <div class="text-center py-3 header">
+        <h1>
+            <span style="color: #ff6b6b;">Diabetes</span>
+            <span class="diabetes-icon"></span>
+            <span style="color: #4ecdc4;">Predictor</span>
+        </h1>
+        <div class="mt-2">
+            <a href="{{ url_for('about') }}" class="btn btn-outline-primary mx-2">About</a>
+            <a href="{{ url_for('contact') }}" class="btn btn-outline-primary mx-2">Contact Us</a>
+            {% if session.user_id %}
+                <a href="{{ url_for('dashboard') }}" class="btn btn-outline-primary mx-2">Dashboard</a>
+                <a href="{{ url_for('logout') }}" class="btn btn-outline-primary mx-2">Logout</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="container mt-4 manual-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <div class="card">
+            <div class="card-body">
+                <div class="manual-icon">⌨️</div>
+                <h2 class="text-center">Manual Data Entry</h2>
+                <p class="text-muted text-center">Enter your medical data below. All fields are optional but providing more data improves prediction accuracy.</p>
+
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="card gender-card">
+                                <div class="card-body">
+                                    <label for="gender" class="form-label">Gender</label>
+                                    <select class="form-control" id="gender" name="gender" required onchange="showFields()">
+                                        <option value="">Select Gender</option>
+                                        <option value="male">Male</option>
+                                        <option value="female">Female</option>
+                                    </select>
+                                    <small class="form-text text-muted">Select your gender to show relevant input fields for diabetes prediction.</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="male-fields" style="display: none;">
+                        <h4>Male Diabetes Prediction Parameters</h4>
+                        <p class="text-info">For males, we focus on key parameters that are most predictive for diabetes risk.</p>
+                        <div class="row">
+                            {% for feature in feature_names %}
+                            {% if feature not in ['Pregnancies', 'SkinThickness'] %}
+                            <div class="col-md-6 mb-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <label for="{{ feature }}" class="form-label">{{ feature }}</label>
+                                        {% if feature == 'Glucose' %}
+                                            <input type="number" min="0" max="500" step="1" class="form-control" id="{{ feature }}" name="{{ feature }}" placeholder="mg/dL">
+                                            <small class="form-text text-muted">Fasting glucose concentration (0-500 mg/dL)<br>Note:Fasting glucose for diabetes is a blood test
+                                                that measures your blood sugar level after not eating or drinking for 8 to 12 hours</small>
+                                        {% elif feature == 'HbA1c' %}
+                                            <input type="number" min="0" max="20" step="0.1" class="form-control" id="{{ feature }}" name="{{ feature }}" placeholder="%">
+                                            <small class="form-text text-muted">HbA1c level (0-20 %)</small>
+                                        {% elif feature == 'BloodPressure' %}
+                                            <input type="number" min="0" max="300" step="1" class="form-control" id="{{ feature }}" name="{{ feature }}" placeholder="mm Hg">
+                                            <small class="form-text text-muted">Diastolic blood pressure (0-300 mm Hg)</small>
+                                        {% elif feature == 'Insulin' %}
+                                            <input type="number" min="0" max="1000" step="1" class="form-control" id="{{ feature }}" name="{{ feature }}" placeholder="mu U/ml">
+                                            <small class="form-text text-muted">2-Hour serum insulin (0-1000 mu U/ml).<br>
+                                                Note:A 2-hour serum insulin test measures the level of insulin in your blood two hours after you have eaten a meal</small>
+                                        {% elif feature == 'BMI' %}
+                                            <input type="number" min="0" max="100" step="0.1" class="form-control" id="{{ feature }}" name="{{ feature }}" placeholder="kg/m²">
+                                            <small class="form-text text-muted">Body mass index (0-100 kg/m²)</small>
+                                        {% elif feature == 'DiabetesPedigreeFunction' %}
+                                            <input type="number" min="0" max="2.5" step="0.01" class="form-control" id="{{ feature }}" name="{{ feature }}" placeholder="0.0-2.5">
+                                            <small class="form-text text-muted">Diabetes pedigree function (0.0-2.5)</small>
+                                        {% elif feature == 'Age' %}
+                                            <input type="number" min="0" max="120" step="1" class="form-control" id="{{ feature }}" name="{{ feature }}" placeholder="years">
+                                            <small class="form-text text-muted">Age in years (0-120)</small>
+                                        {% else %}
+                                            <input type="number" step="0.01" class="form-control" id="{{ feature }}" name="{{ feature }}" placeholder="Enter {{ feature }}">
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div id="female-fields" style="display: none;">
+                        <h4>Female Diabetes Prediction Parameters</h4>
+                        <p class="text-info">For females, we include pregnancy history along with other key parameters for comprehensive diabetes risk assessment.</p>
+                        <div class="row">
+                            {% for feature in feature_names %}
+                            {% if feature not in ['SkinThickness'] %}
+                            <div class="col-md-6 mb-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <label for="{{ feature }}" class="form-label">{{ feature }}</label>
+                                        {% if feature == 'Pregnancies' %}
+                                            <input type="number" min="0" max="20" step="1" class="form-control" id="{{ feature }}" name="{{ feature }}" placeholder="0-20">
+                                            <small class="form-text text-muted">Number of times pregnant (0-20)</small>
+                                        {% elif feature == 'Glucose' %}
+                                            <input type="number" min="0" max="500" step="1" class="form-control" id="{{ feature }}" name="{{ feature }}" placeholder="mg/dL">
+                                            <small class="form-text text-muted">Fasting glucose concentration (0-500 mg/dL)</small>
+                                        {% elif feature == 'HbA1c' %}
+                                            <input type="number" min="0" max="20" step="0.1" class="form-control" id="{{ feature }}" name="{{ feature }}" placeholder="%">
+                                            <small class="form-text text-muted">HbA1c level (0-20 %)</small>
+                                        {% elif feature == 'BloodPressure' %}
+                                            <input type="number" min="0" max="300" step="1" class="form-control" id="{{ feature }}" name="{{ feature }}" placeholder="mm Hg">
+                                            <small class="form-text text-muted">Diastolic blood pressure (0-300 mm Hg)</small>
+                                        {% elif feature == 'Insulin' %}
+                                            <input type="number" min="0" max="1000" step="1" class="form-control" id="{{ feature }}" name="{{ feature }}" placeholder="mu U/ml">
+                                            <small class="form-text text-muted">2-Hour serum insulin (0-1000 mu U/ml).<br>
+                                                Note:A 2-hour serum insulin test measures the level of insulin in your blood two hours after you have eaten a meal</small>
+                                        {% elif feature == 'BMI' %}
+                                            <input type="number" min="0" max="100" step="0.1" class="form-control" id="{{ feature }}" name="{{ feature }}" placeholder="kg/m²">
+                                            <small class="form-text text-muted">Body mass index (0-100 kg/m²)</small>
+                                        {% elif feature == 'DiabetesPedigreeFunction' %}
+                                            <input type="number" min="0" max="2.5" step="0.01" class="form-control" id="{{ feature }}" name="{{ feature }}" placeholder="0.0-2.5">
+                                            <small class="form-text text-muted">Diabetes pedigree function (0.0-2.5)</small>
+                                        {% elif feature == 'Age' %}
+                                            <input type="number" min="0" max="120" step="1" class="form-control" id="{{ feature }}" name="{{ feature }}" placeholder="years">
+                                            <small class="form-text text-muted">Age in years (0-120)</small>
+                                        {% else %}
+                                            <input type="number" step="0.01" class="form-control" id="{{ feature }}" name="{{ feature }}" placeholder="Enter {{ feature }}">
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Button container with flex layout -->
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-primary">Back to Dashboard</a>
+                        <button type="submit" class="btn btn-primary">Predict Diabetes Risk</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script>
+        function showFields() {
+            const gender = document.getElementById('gender').value;
+            const maleFields = document.getElementById('male-fields');
+            const femaleFields = document.getElementById('female-fields');
+
+            if (gender === 'male') {
+                maleFields.style.display = 'block';
+                femaleFields.style.display = 'none';
+            } else if (gender === 'female') {
+                maleFields.style.display = 'none';
+                femaleFields.style.display = 'block';
+            } else {
+                maleFields.style.display = 'none';
+                femaleFields.style.display = 'none';
+            }
+        }
+        </script>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

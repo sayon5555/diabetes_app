@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diabetes App</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            background: linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.85)), 
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%234ecdc4" opacity="0.1"/><path d="M30,30 L70,30 L70,70 L30,70 Z" fill="none" stroke="%23ff6b6b" stroke-width="2" opacity="0.2"/><circle cx="50" cy="50" r="20" fill="none" stroke="%234ecdc4" stroke-width="2" opacity="0.2"/></svg>');
+            background-size: cover;
+            background-position: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .bmi-container {
+            perspective: 1000px;
+            margin-top: 40px;
+        }
+        
+        .card {
+            background: linear-gradient(145deg, #ffffff, #f0f0f0);
+            border-radius: 20px;
+            padding: 0;
+            box-shadow: 
+                0 10px 25px rgba(0, 0, 0, 0.1),
+                0 4px 10px rgba(0, 0, 0, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            transform-style: preserve-3d;
+            transform: translateZ(10px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateZ(15px);
+            box-shadow: 
+                0 15px 35px rgba(0, 0, 0, 0.15),
+                0 5px 15px rgba(0, 0, 0, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        }
+        
+        .card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 107, 107, 0.1), transparent);
+            transform: rotate(45deg);
+            z-index: 0;
+        }
+        
+        .card-body {
+            position: relative;
+            z-index: 1;
+            background: transparent;
+        }
+        
+        .bmi-icon {
+            font-size: 3rem;
+            color: #4ecdc4;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(to right, #ff6b6b, #ff8e8e);
+            border: none;
+            border-radius: 50px;
+            padding: 10px 25px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 20px;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.5);
+        }
+        
+        .btn-outline-primary {
+            border-color: #4ecdc4;
+            color: #4ecdc4;
+            border-radius: 50px;
+            padding: 10px 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: #4ecdc4;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(78, 205, 196, 0.3);
+        }
+        
+        .form-control {
+            border-radius: 10px;
+            padding: 12px 15px;
+            border: 1px solid #e0e0e0;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+        
+        .form-control:focus {
+            border-color: #4ecdc4;
+            box-shadow: 0 0 0 0.25rem rgba(78, 205, 196, 0.25);
+        }
+        
+        .form-group label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        
+        h1 {
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        h2 {
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        
+        .diabetes-icon {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            border-radius: 50%;
+            margin: 0 10px;
+            position: relative;
+            transform: translateY(10px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .diabetes-icon::before {
+            content: '+';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .floating-elements {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            overflow: hidden;
+            z-index: 0;
+        }
+        
+        .floating-element {
+            position: absolute;
+            background: rgba(255, 107, 107, 0.1);
+            border-radius: 50%;
+            animation: float 15s infinite linear;
+        }
+        
+        .floating-element:nth-child(1) {
+            width: 80px;
+            height: 80px;
+            top: 10%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+        
+        .floating-element:nth-child(2) {
+            width: 60px;
+            height: 60px;
+            top: 70%;
+            left: 80%;
+            animation-delay: -5s;
+        }
+        
+        .floating-element:nth-child(3) {
+            width: 40px;
+            height: 40px;
+            top: 40%;
+            left: 85%;
+            animation-delay: -10s;
+        }
+        
+        #bmiResult {
+            background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            border-left: 4px solid #4ecdc4;
+            transition: all 0.3s ease;
+        }
+        
+        #bmiResult h5 {
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        #bmiValue {
+            color: #ff6b6b;
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+        
+        #bmiCategory {
+            color: #4ecdc4;
+            font-weight: 600;
+            margin: 0;
+            padding: 8px 15px;
+            background: rgba(78, 205, 196, 0.1);
+            border-radius: 10px;
+            display: inline-block;
+        }
+        
+        .bmi-info {
+            background: rgba(255, 107, 107, 0.05);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-left: 4px solid #ff6b6b;
+        }
+        
+        @keyframes float {
+            0% {
+                transform: translateY(0) rotate(0deg);
+            }
+            50% {
+                transform: translateY(-20px) rotate(180deg);
+            }
+            100% {
+                transform: translateY(0) rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-elements">
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+    </div>
+    
+    <div class="text-center py-3 header">
+        <h1>
+            <span style="color: #ff6b6b;">Diabetes</span>
+            <span class="diabetes-icon"></span>
+            <span style="color: #4ecdc4;">Predictor</span>
+        </h1>
+        <div class="mt-2">
+            <a href="{{ url_for('about') }}" class="btn btn-outline-primary mx-2">About</a>
+            <a href="{{ url_for('contact') }}" class="btn btn-outline-primary mx-2">Contact Us</a>
+            {% if session.user_id %}
+                <a href="{{ url_for('dashboard') }}" class="btn btn-outline-primary mx-2">Dashboard</a>
+                <a href="{{ url_for('logout') }}" class="btn btn-outline-primary mx-2">Logout</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="container mt-4 bmi-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <h2 class="text-center">BMI Calculator</h2>
+        <p class="text-center text-muted mb-4">Calculate your Body Mass Index (BMI) by entering your weight and height below.</p>
+
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <div class="bmi-icon">⚖️</div>
+                        <div class="bmi-info">
+                            <p class="mb-0"><strong>BMI Categories:</strong><br>
+                            Underweight: &lt; 18.5<br>
+                            Normal weight: 18.5 - 24.9<br>
+                            Overweight: 25 - 29.9<br>
+                            Obese: ≥ 30</p>
+                        </div>
+                        
+                        <form id="bmiForm">
+                            <div class="form-group text-start">
+                                <label for="weight">Weight (kg)</label>
+                                <input type="number" class="form-control" id="weight" step="0.1" placeholder="Enter weight in kilograms" required>
+                            </div>
+                            <div class="form-group text-start">
+                                <label for="height">Height (cm)</label>
+                                <input type="number" class="form-control" id="height" step="0.1" placeholder="Enter height in centimeters" required>
+                            </div>
+                            <button type="button" class="btn btn-primary" onclick="calculateBMI()">Calculate BMI</button>
+                        </form>
+                        
+                        <div id="bmiResult" class="mt-3" style="display: none;">
+                            <h5>Your BMI: <span id="bmiValue"></span></h5>
+                            <p id="bmiCategory"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-4">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-primary">Back to Dashboard</a>
+        </div>
+
+        <script>
+        function calculateBMI() {
+            const weight = parseFloat(document.getElementById('weight').value);
+            const height = parseFloat(document.getElementById('height').value) / 100; // Convert cm to meters
+
+            if (weight > 0 && height > 0) {
+                const bmi = (weight / (height * height)).toFixed(2);
+                document.getElementById('bmiValue').textContent = bmi;
+
+                let category = '';
+                let categoryColor = '';
+                
+                if (bmi < 18.5) {
+                    category = 'Underweight';
+                    categoryColor = '#17a2b8'; // Info color
+                } else if (bmi < 25) {
+                    category = 'Normal weight';
+                    categoryColor = '#28a745'; // Success color
+                } else if (bmi < 30) {
+                    category = 'Overweight';
+                    categoryColor = '#ffc107'; // Warning color
+                } else {
+                    category = 'Obese';
+                    categoryColor = '#dc3545'; // Danger color
+                }
+
+                document.getElementById('bmiCategory').textContent = 'Category: ' + category;
+                document.getElementById('bmiCategory').style.backgroundColor = categoryColor + '20';
+                document.getElementById('bmiCategory').style.color = categoryColor;
+                document.getElementById('bmiCategory').style.border = '1px solid ' + categoryColor;
+                
+                document.getElementById('bmiResult').style.display = 'block';
+                
+                // Add smooth animation
+                document.getElementById('bmiResult').style.animation = 'fadeIn 0.5s ease-in';
+            } else {
+                alert('Please enter valid weight and height values.');
+            }
+        }
+
+        // Add fadeIn animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+        `;
+        document.head.appendChild(style);
+        </script>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - Diabetes App</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            background: linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.85)), 
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%234ecdc4" opacity="0.1"/><path d="M30,30 L70,30 L70,70 L30,70 Z" fill="none" stroke="%23ff6b6b" stroke-width="2" opacity="0.2"/><circle cx="50" cy="50" r="20" fill="none" stroke="%234ecdc4" stroke-width="2" opacity="0.2"/></svg>');
+            background-size: cover;
+            background-position: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 20px 0;
+        }
+        
+        .about-container {
+            perspective: 1000px;
+            margin-top: 40px;
+        }
+        
+        .content-card {
+            background: linear-gradient(145deg, #ffffff, #f0f0f0);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 
+                0 10px 25px rgba(0, 0, 0, 0.1),
+                0 4px 10px rgba(0, 0, 0, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            transform-style: preserve-3d;
+            transform: translateZ(10px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .content-card:hover {
+            transform: translateZ(15px);
+            box-shadow: 
+                0 15px 35px rgba(0, 0, 0, 0.15),
+                0 5px 15px rgba(0, 0, 0, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        }
+        
+        .content-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 107, 107, 0.1), transparent);
+            transform: rotate(45deg);
+            z-index: 0;
+        }
+        
+        .content-body {
+            position: relative;
+            z-index: 1;
+            background: transparent;
+        }
+        
+        .about-icon {
+            font-size: 3rem;
+            color: #4ecdc4;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-outline-primary {
+            border-color: #4ecdc4;
+            color: #4ecdc4;
+            border-radius: 50px;
+            padding: 8px 20px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: #4ecdc4;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(78, 205, 196, 0.3);
+        }
+        
+        h1 {
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        h2 {
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 25px;
+            border-bottom: 3px solid #4ecdc4;
+            padding-bottom: 10px;
+        }
+        
+        .diabetes-icon {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            border-radius: 50%;
+            margin: 0 15px;
+            position: relative;
+            transform: translateY(10px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .diabetes-icon::before {
+            content: '+';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .floating-elements {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            overflow: hidden;
+            z-index: 0;
+        }
+        
+        .floating-element {
+            position: absolute;
+            background: rgba(255, 107, 107, 0.1);
+            border-radius: 50%;
+            animation: float 15s infinite linear;
+        }
+        
+        .floating-element:nth-child(1) {
+            width: 80px;
+            height: 80px;
+            top: 10%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+        
+        .floating-element:nth-child(2) {
+            width: 60px;
+            height: 60px;
+            top: 70%;
+            left: 80%;
+            animation-delay: -5s;
+        }
+        
+        .floating-element:nth-child(3) {
+            width: 40px;
+            height: 40px;
+            top: 40%;
+            left: 85%;
+            animation-delay: -10s;
+        }
+        
+        .alert-warning {
+            background: linear-gradient(145deg, #fff3cd, #ffeaa7);
+            border: 1px solid #ffeaa7;
+            border-radius: 15px;
+            border-left: 5px solid #ffc107;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.2);
+            transform: translateZ(5px);
+            transition: transform 0.3s ease;
+        }
+        
+        .alert-warning:hover {
+            transform: translateZ(8px);
+        }
+        
+        .alert-warning strong {
+            color: #856404;
+        }
+        
+        p {
+            line-height: 1.7;
+            color: #555;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+        }
+        
+        .feature-point {
+            background: rgba(78, 205, 196, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            border-left: 4px solid #4ecdc4;
+            transition: all 0.3s ease;
+        }
+        
+        .feature-point:hover {
+            transform: translateX(5px);
+            background: rgba(78, 205, 196, 0.15);
+        }
+        
+        @keyframes float {
+            0% {
+                transform: translateY(0) rotate(0deg);
+            }
+            50% {
+                transform: translateY(-20px) rotate(180deg);
+            }
+            100% {
+                transform: translateY(0) rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-elements">
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+    </div>
+    
+    <!-- Header section with centered title and buttons -->
+    <div class="container-fluid py-4 header">
+        <div class="row justify-content-center">
+            <div class="col-md-8 text-center">
+                <!-- Title -->
+                <h1>
+                    <span style="color: #ff6b6b;">Diabetes</span>
+                    <span class="diabetes-icon"></span>
+                    <span style="color: #4ecdc4;">Predictor</span>
+                </h1>
+                
+                <!-- Buttons -->
+                <div class="d-flex justify-content-center flex-wrap gap-2">
+                    <a href="{{ url_for('contact') }}" class="btn btn-outline-primary mx-2">Contact Us</a>
+                    {% if session.user_id %}
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-primary">Dashboard</a>
+                        <a href="{{ url_for('logout') }}" class="btn btn-outline-primary">Logout</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main content -->
+    <div class="container mt-4 about-container">
+        <div class="content-card">
+            <div class="content-body">
+                <div class="about-icon text-center">❤️</div>
+                <h2 class="text-center">Welcome to your personal health companion!</h2>
+                
+                <div class="feature-point">
+                    <p>This diabetes predictor app is designed to help you understand your potential risk for developing type 2 diabetes.</p>
+                </div>
+
+                <div class="feature-point">
+                    <p>By analyzing key health indicators like your age, weight, family history, and lifestyle factors, our tool provides an instant, data-driven risk assessment. It's a powerful first step toward gaining awareness about your metabolic health and can be a great conversation starter with your doctor.</p>
+                </div>
+
+                <div class="alert alert-warning" role="alert">
+                    <strong>A Very Important Note:</strong> Please remember that this assessment is a screening tool and not a medical diagnosis. No algorithm can be 100% accurate, and many factors influence your health. The result provided by this app is not a substitute for professional medical advice.
+                </div>
+
+                <div class="feature-point">
+                    <p>We strongly encourage you to share your results with a healthcare professional for a proper evaluation and personalized guidance. Your health journey is important—let this app be your first step, not your last.</p>
+                </div>
+
+                <div class="feature-point">
+                    <p>Take charge of your well-being today.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

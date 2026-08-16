@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diabetes App</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            background: linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.85)), 
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%234ecdc4" opacity="0.1"/><path d="M30,30 L70,30 L70,70 L30,70 Z" fill="none" stroke="%23ff6b6b" stroke-width="2" opacity="0.2"/><circle cx="50" cy="50" r="20" fill="none" stroke="%234ecdc4" stroke-width="2" opacity="0.2"/></svg>');
+            background-size: cover;
+            background-position: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .result-container {
+            perspective: 1000px;
+            margin-top: 40px;
+        }
+        
+        .card {
+            background: linear-gradient(145deg, #ffffff, #f0f0f0);
+            border-radius: 20px;
+            box-shadow: 
+                0 10px 25px rgba(0, 0, 0, 0.1),
+                0 4px 10px rgba(0, 0, 0, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            transform-style: preserve-3d;
+            transform: translateZ(10px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            margin-bottom: 25px;
+        }
+        
+        .card:hover {
+            transform: translateZ(15px);
+            box-shadow: 
+                0 15px 35px rgba(0, 0, 0, 0.15),
+                0 5px 15px rgba(0, 0, 0, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        }
+        
+        .card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 107, 107, 0.1), transparent);
+            transform: rotate(45deg);
+            z-index: 0;
+        }
+        
+        .card-body {
+            position: relative;
+            z-index: 1;
+            background: transparent;
+        }
+        
+        .result-icon {
+            font-size: 3rem;
+            color: #4ecdc4;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-outline-primary {
+            border-color: #4ecdc4;
+            color: #4ecdc4;
+            border-radius: 50px;
+            padding: 10px 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: #4ecdc4;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(78, 205, 196, 0.3);
+        }
+        
+        h1 {
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        h2 {
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 25px;
+            border-bottom: 3px solid #4ecdc4;
+            padding-bottom: 10px;
+        }
+        
+        h3 {
+            color: #333;
+            font-weight: 600;
+            margin: 40px 0 20px 0;
+            border-bottom: 2px solid #ff6b6b;
+            padding-bottom: 8px;
+        }
+        
+        .diabetes-icon {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            border-radius: 50%;
+            margin: 0 10px;
+            position: relative;
+            transform: translateY(10px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .diabetes-icon::before {
+            content: '+';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .floating-elements {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            overflow: hidden;
+            z-index: 0;
+        }
+        
+        .floating-element {
+            position: absolute;
+            background: rgba(255, 107, 107, 0.1);
+            border-radius: 50%;
+            animation: float 15s infinite linear;
+        }
+        
+        .floating-element:nth-child(1) {
+            width: 80px;
+            height: 80px;
+            top: 10%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+        
+        .floating-element:nth-child(2) {
+            width: 60px;
+            height: 60px;
+            top: 70%;
+            left: 80%;
+            animation-delay: -5s;
+        }
+        
+        .floating-element:nth-child(3) {
+            width: 40px;
+            height: 40px;
+            top: 40%;
+            left: 85%;
+            animation-delay: -10s;
+        }
+        
+        /* Meter Styling - FIXED */
+        .meter {
+            background: linear-gradient(145deg, #ffffff, #f8f9fa);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 
+                0 8px 25px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            margin-bottom: 30px;
+        }
+        
+        .meter p {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        
+        .linear-meter {
+            position: relative;
+            height: 80px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            margin: 20px 0;
+            overflow: hidden;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .meter-bar {
+            display: flex;
+            height: 100%;
+            position: relative;
+        }
+        
+        .meter-section {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .meter-section:hover {
+            transform: scale(1.05);
+            z-index: 2;
+        }
+        
+        .very-low { background: linear-gradient(45deg, #28a745, #20c997); }
+        .low { background: linear-gradient(45deg, #20c997, #17a2b8); }
+        .medium { background: linear-gradient(45deg, #ffc107, #fd7e14); }
+        .high { background: linear-gradient(45deg, #fd7e14, #dc3545); }
+        .very-high { background: linear-gradient(45deg, #dc3545, #c82333); }
+        
+        .meter-indicator {
+            position: absolute;
+            top: -10px;
+            width: 4px;
+            height: 100px;
+            background: #333;
+            left: calc(var(--position) * 1%);
+            transform: translateX(-50%);
+            z-index: 10;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+        
+        .meter-indicator::before {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: -8px;
+            width: 20px;
+            height: 20px;
+            background: #333;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        
+        .meter-percentage {
+            position: absolute;
+            top: -40px;
+            left: calc(var(--position) * 1%);
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+        
+        .meter-category {
+            text-align: center;
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-top: 15px;
+            color: #333;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        /* Food Cards Styling */
+        .foods {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .food-card {
+            background: linear-gradient(145deg, #ffffff, #f8f9fa);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 
+                0 8px 20px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        .food-card:hover {
+            transform: translateY(-5px) translateZ(10px);
+            box-shadow: 
+                0 15px 30px rgba(0, 0, 0, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        }
+        
+        .food-card img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 50%;
+            margin-bottom: 15px;
+            border: 3px solid #4ecdc4;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .food-card h4 {
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .food-card p {
+            color: #666;
+            line-height: 1.5;
+            margin: 0;
+        }
+        
+        .alert-warning {
+            background: linear-gradient(145deg, #fff3cd, #ffeaa7);
+            border: 1px solid #ffeaa7;
+            border-radius: 15px;
+            border-left: 5px solid #ffc107;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.2);
+            transform: translateZ(5px);
+            transition: transform 0.3s ease;
+        }
+        
+        .alert-warning:hover {
+            transform: translateZ(8px);
+        }
+        
+        .alert-warning strong {
+            color: #856404;
+        }
+        
+        @keyframes float {
+            0% {
+                transform: translateY(0) rotate(0deg);
+            }
+            50% {
+                transform: translateY(-20px) rotate(180deg);
+            }
+            100% {
+                transform: translateY(0) rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-elements">
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+    </div>
+    
+    <div class="text-center py-3 header">
+        <h1>
+            <span style="color: #ff6b6b;">Diabetes</span>
+            <span class="diabetes-icon"></span>
+            <span style="color: #4ecdc4;">Predictor</span>
+        </h1>
+        <div class="mt-2">
+            <a href="{{ url_for('about') }}" class="btn btn-outline-primary mx-2">About</a>
+            <a href="{{ url_for('contact') }}" class="btn btn-outline-primary mx-2">Contact Us</a>
+            {% if session.user_id %}
+                <a href="{{ url_for('dashboard') }}" class="btn btn-outline-primary mx-2">Dashboard</a>
+                <a href="{{ url_for('logout') }}" class="btn btn-outline-primary mx-2">Logout</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="container mt-4 result-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <div class="card">
+            <div class="card-body text-center">
+                <div class="result-icon">📊</div>
+                <h2>Diabetes Risk Assessment Result</h2>
+                <div class="meter">
+                    <p>Probability of diabetes: <strong style="color: #ff6b6b; font-size: 1.5rem;">{{ "{:.2f}".format(prob*100) }}%</strong></p>
+                    <div class="linear-meter">
+                        <div class="meter-bar">
+                            <div class="meter-section very-low">Very Low</div>
+                            <div class="meter-section low">Low</div>
+                            <div class="meter-section medium">Medium</div>
+                            <div class="meter-section high">High</div>
+                            <div class="meter-section very-high">Very High</div>
+                        </div>
+                        <div class="meter-indicator" style="--position: {{ prob * 100 }};"></div>
+                        <div class="meter-percentage">{{ "{:.0f}".format(prob*100) }}%</div>
+                        <div class="meter-category">{{ category }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h3>🍎 Suggested Foods for Better Health</h3>
+        <div class="foods">
+            {% for food in foods %}
+                <div class="food-card">
+                    <img src="{{ food.img }}" alt="{{ food.name }}" />
+                    <h4>{{ food.name }}</h4>
+                    <p>{{ food.desc }}</p>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="alert alert-warning" role="alert">
+            <strong>Important Disclaimer:</strong> Please remember that this assessment is a screening tool and not a medical diagnosis. No algorithm can be 100% accurate, and many factors influence your health. The result provided by this app is not a substitute for professional medical advice.
+        </div>
+
+        <div class="text-center">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-primary">Back to Dashboard</a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
